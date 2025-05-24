@@ -42,6 +42,7 @@
         </button>
         <button id="pause-play">
           <svg
+            id="play-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="30"
             height="30"
@@ -54,6 +55,7 @@
             />
           </svg>
           <svg
+            id="pause-icon"
             xmlns="http://www.w3.org/2000/svg"
             width="30"
             height="30"
@@ -112,6 +114,10 @@
       const currentArtist = document.getElementById("currentArtist");
       const currentTitle = document.getElementById("currentTitle");
 
+      const pausePlayBtn = document.getElementById("pause-play");
+      const pauseIcon = document.getElementById("pause-icon");
+      const playIcon = document.getElementById("play-icon");
+
       const socket = io("http://localhost:3000");
       let current = 0;
       let musicQueue = [];
@@ -132,7 +138,23 @@
 
         item.textContent = index;
 
+        newDiv.addEventListener("click", () => {
+          console.log("clicked ", index);
+          updateCurrentTrackUI();
+          socket.emit("play-from-index", index);
+        });
         musicContainer.appendChild(newDiv);
+      }
+
+      function updateCurrentTrackUI() {
+        const queueCards = document.querySelectorAll(".queue-card");
+        queueCards.forEach((card, idx) => {
+          if (idx === current) {
+            card.classList.add("active-track");
+          } else {
+            card.classList.remove("active-track");
+          }
+        });
       }
 
       let playerReady = false;
@@ -165,7 +187,8 @@
             },
             onStateChange: (event) => {
               hasEnded = event.data === YT.PlayerState.ENDED;
-
+              pauseIcon.style.display = "inline";
+              playIcon.style.display = "none";
               if (event.data == YT.PlayerState.ENDED) {
                 console.log("Video ended");
                 if (current === musicQueue.length - 1) {
@@ -175,10 +198,16 @@
                 }
               }
               if (event.data == YT.PlayerState.PLAYING) {
+                pauseIcon.style.display = "none";
+                playIcon.style.display = "inline";
+                updateCurrentTrackUI();
                 currentVId = player.getVideoData().video_id;
-                console.log(player);
                 currentTitle.textContent = player.videoTitle;
                 currentArtist.textContent = player.playerInfo.videoData.author;
+              }
+              if (event.data == YT.PlayerState.PAUSED) {
+                pauseIcon.style.display = "inline";
+                playIcon.style.display = "none";
               }
             },
           },
@@ -246,6 +275,23 @@
       prevBtn.addEventListener("click", () => {
         if (current > 0) {
           socket.emit("prev");
+        }
+      });
+
+      //play/pause
+      pausePlayBtn.addEventListener("click", () => {
+        const playerState = player.getPlayerState();
+        if (playerState === YT.PlayerState.PLAYING) {
+          player.pauseVideo();
+          pauseIcon.style.display = "none";
+          playIcon.style.display = "inline";
+        } else if (
+          playerState === YT.PlayerState.PAUSED ||
+          playerState === YT.PlayerState.UNSTARTED
+        ) {
+          player.playVideo();
+          pauseIcon.style.display = "inline";
+          playIcon.style.display = "none";
         }
       });
     </script>

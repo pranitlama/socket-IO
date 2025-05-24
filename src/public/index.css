@@ -108,9 +108,9 @@ button {
 
 .bottom-section {
   position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto auto auto;
+
   bottom: 0;
   left: 0;
   width: 100%;
@@ -120,7 +120,7 @@ button {
 
 .bottom-button {
   display: flex;
-  gap: 20px;
+  padding: 0;
   align-items: center;
   height: 100%;
 }
@@ -172,7 +172,16 @@ button {
   position: fixed;
   z-index: 1;
   left: 50%;
-  bottom: 30px;
+  top: 80px;
+}
+
+#play-icon {
+  display: none;
+}
+
+.queue-card.active-track {
+  background-color: black;
+  opacity: 0.3;
 }
 
 #toast.show {
@@ -184,44 +193,44 @@ button {
 
 @-webkit-keyframes fadein {
   from {
-    bottom: 0;
+    top: 0;
     opacity: 0;
   }
   to {
-    bottom: 30px;
+    top: 80px;
     opacity: 1;
   }
 }
 
 @keyframes fadein {
   from {
-    bottom: 0;
+    top: 0;
     opacity: 0;
   }
   to {
-    bottom: 30px;
+    top: 80px;
     opacity: 1;
   }
 }
 
 @-webkit-keyframes fadeout {
   from {
-    bottom: 30px;
+    top: 80px;
     opacity: 1;
   }
   to {
-    bottom: 0;
+    top: 0;
     opacity: 0;
   }
 }
 
 @keyframes fadeout {
   from {
-    bottom: 30px;
+    top: 80px;
     opacity: 1;
   }
   to {
-    bottom: 0;
+    top: 0;
     opacity: 0;
   }
 }

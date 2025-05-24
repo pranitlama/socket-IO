@@ -53,6 +53,13 @@ io.on("connection", (socket) => {
       io.emit("sync-data", { musicQueue, current });
     }
   });
+
+  socket.on("play-from-index", (index) => {
+    if (index >= 0 && index < musicQueue.length) {
+      current = index;
+      io.emit("sync-data", { musicQueue, current });
+    }
+  });
   socket.on("disconnect", () => {
     console.log("user is disconnected");
   });
