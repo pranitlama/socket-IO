@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./index.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <title>Socket + YouTube</title>
+  </head>
+  <body>
+    <section class="main-section">
+      <div id="player"></div>
+      <div class="right-section">
+        <div class="input-container">
+          <input id="input-val" placeholder="YouTube Video ID" />
+          <button id="send-btn">Send</button>
+        </div>
+        <div id="musicContainer"></div>
+      </div>
+    </section>
+    <div class="bottom-section">
+      <div class="bottom-button">
+        <button id="prev">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="currentColor"
+            class="bi bi-chevron-bar-left"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0M4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5"
+            />
+          </svg>
+        </button>
+        <button id="pause-play">
+          <svg
+            id="play-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="30"
+            height="30"
+            fill="currentColor"
+            class="bi bi-pause"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5m4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5"
+            />
+          </svg>
+          <svg
+            id="pause-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="30"
+            height="30"
+            fill="currentColor"
+            class="bi bi-play"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z"
+            />
+          </svg>
+        </button>
+        <button id="next">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="currentColor"
+            class="bi bi-chevron-bar-right"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0M11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="bottom-center">
+        <img src="" alt="" id="currentImg" />
+        <div>
+          <h2 id="currentArtist"></h2>
+          <span id="currentTitle"></span>
+        </div>
+      </div>
+      <div></div>
+    </div>
+    <div id="toast"></div>
+    <!-- Load YouTube Iframe API -->
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      const inputVal = document.getElementById("input-val");
+      const sendBtn = document.getElementById("send-btn");
+      const musicContainer = document.getElementById("musicContainer");
+      const prevBtn = document.getElementById("prev");
+      const nextBtn = document.getElementById("next");
+      const toast = document.getElementById("toast");
+      let socket;
+
+      const user = JSON.parse(sessionStorage.getItem("user"));
+      let roomId = sessionStorage.getItem("roomId");
+      const currentImg = document.getElementById("currentImg");
+      const currentArtist = document.getElementById("currentArtist");
+      const currentTitle = document.getElementById("currentTitle");
+
+      const pausePlayBtn = document.getElementById("pause-play");
+      const pauseIcon = document.getElementById("pause-icon");
+      const playIcon = document.getElementById("play-icon");
+
+      let current = 0;
+      let musicQueue = [];
+      let player;
+      let title;
+      let currentVId;
+      if (!user) {
+        window.location.href = "/";
+      } else {
+        socket = io("http://localhost:3000");
+        socket.on("connect", () => {
+          socket.emit("join-room", {
+            roomId: roomId || socket.id,
+            userId: user.userId,
+          });
+          if (!roomId) sessionStorage.setItem("roomId", socket.id);
+          roomId = sessionStorage.getItem("roomId");
+        });
+      }
+
+      function addList(id, index) {
+        const newDiv = document.createElement("div");
+
+        newDiv.className = "queue-card";
+        const newImg = document.createElement("img");
+
+        newImg.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+        const item = document.createElement("h4");
+        newDiv.appendChild(newImg);
+        newDiv.append(item);
+
+        item.textContent = index;
+
+        if (isCreator) {
+          newDiv.addEventListener("click", () => {
+            if (current !== index) {
+              updateCurrentTrackUI();
+              socket.emit("play-from-index", index, roomId);
+            }
+          });
+        }
+        musicContainer.appendChild(newDiv);
+      }
+
+      function updateCurrentTrackUI() {
+        const queueCards = document.querySelectorAll(".queue-card");
+        queueCards.forEach((card, idx) => {
+          if (idx === current) {
+            card.classList.remove("inactive-track");
+          } else {
+            card.classList.add("inactive-track");
+          }
+        });
+      }
+
+      let playerReady = false;
+      let bufferedData = null;
+      let hasEnded;
+      let isCreator;
+
+      function showToast(message) {
+        toast.className = "show";
+        toast.textContent = message;
+        setTimeout(function () {
+          toast.className = toast.className.replace("show", "");
+        }, 3000);
+      }
+
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player("player", {
+          height: "390",
+          width: "640",
+          videoId: "",
+          playerVars: {
+            playsinline: 1,
+          },
+          events: {
+            onReady: (event) => {
+              playerReady = true;
+              if (bufferedData) {
+                syncPlayerData(bufferedData);
+                bufferedData = null;
+              }
+            },
+            onStateChange: (event) => {
+              hasEnded = event.data === YT.PlayerState.ENDED;
+              pauseIcon.style.display = "inline";
+              playIcon.style.display = "none";
+              if (event.data == YT.PlayerState.ENDED) {
+                if (current === musicQueue.length - 1) {
+                  socket.emit("ended", roomId);
+                } else {
+                  socket.emit("next", roomId);
+                }
+              }
+              if (event.data == YT.PlayerState.PLAYING) {
+                pauseIcon.style.display = "none";
+                playIcon.style.display = "inline";
+                updateCurrentTrackUI();
+                currentVId = player.getVideoData().video_id;
+                currentTitle.textContent = player.videoTitle;
+                currentArtist.textContent = player.playerInfo.videoData.author;
+              }
+              if (event.data == YT.PlayerState.PAUSED) {
+                pauseIcon.style.display = "inline";
+                playIcon.style.display = "none";
+              }
+            },
+          },
+        });
+      };
+
+      function syncPlayerData(data) {
+        current = data.current;
+        musicQueue = data.musicQueue;
+        musicContainer.innerHTML = "";
+        musicQueue.forEach((element, index) => {
+          addList(element, index);
+        });
+
+        if (
+          player &&
+          musicQueue.length > 0 &&
+          currentVId != musicQueue[current]
+        ) {
+          currentImg.src = `https://img.youtube.com/vi/${musicQueue[current]}/hqdefault.jpg`;
+
+          player.loadVideoById(musicQueue[current]);
+        }
+        updateCurrentTrackUI();
+      }
+
+      socket.on("sync-data", (data) => {
+        if (playerReady) {
+          isCreator = user.userId === data.creator;
+          console.log(isCreator, user.userId, data.creator);
+          nextBtn.disabled = !isCreator;
+          prevBtn.disabled = !isCreator;
+          pausePlayBtn.disabled = !isCreator;
+          syncPlayerData(data);
+        } else {
+          bufferedData = data;
+        }
+      });
+
+      //send data to server
+      sendBtn.addEventListener("click", () => {
+        if (inputVal.value != "") {
+          const id = inputVal.value.trim();
+          let ytId;
+          try {
+            const url = new URL(inputVal.value);
+            ytId = url.searchParams.get("v");
+          } catch (e) {
+            ytId = inputVal.value;
+          }
+          if (ytId) {
+            console.log(roomId);
+            socket.emit("add-data", ytId, roomId);
+          }
+
+          inputVal.value = "";
+        }
+        showToast("Added to Queue");
+      });
+
+      //next music
+
+      nextBtn.addEventListener("click", () => {
+        if (musicQueue.length - 1 > current) {
+          socket.emit("next", roomId);
+        }
+      });
+
+      //prev music
+
+      prevBtn.addEventListener("click", () => {
+        if (current > 0) {
+          socket.emit("prev", roomId);
+        }
+      });
+
+      //play/pause
+      pausePlayBtn.addEventListener("click", () => {
+        const playerState = player.getPlayerState();
+        if (playerState === YT.PlayerState.PLAYING) {
+          player.pauseVideo();
+          pauseIcon.style.display = "none";
+          playIcon.style.display = "inline";
+        } else if (
+          playerState === YT.PlayerState.PAUSED ||
+          playerState === YT.PlayerState.UNSTARTED
+        ) {
+          player.playVideo();
+          pauseIcon.style.display = "inline";
+          playIcon.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
