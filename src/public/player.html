@@ -156,7 +156,7 @@
           newDiv.addEventListener("click", () => {
             if (current !== index) {
               updateCurrentTrackUI();
-              socket.emit("play-from-index", index, roomId);
+              socket.emit("play-from-index", index, roomId, user.userId);
             }
           });
         }
@@ -211,7 +211,7 @@
                 if (current === musicQueue.length - 1) {
                   socket.emit("ended", roomId);
                 } else {
-                  socket.emit("next", roomId);
+                  socket.emit("auto-next", roomId);
                 }
               }
               if (event.data == YT.PlayerState.PLAYING) {
@@ -289,7 +289,7 @@
 
       nextBtn.addEventListener("click", () => {
         if (musicQueue.length - 1 > current) {
-          socket.emit("next", roomId);
+          socket.emit("next", roomId, user.userId);
         }
       });
 
@@ -297,7 +297,7 @@
 
       prevBtn.addEventListener("click", () => {
         if (current > 0) {
-          socket.emit("prev", roomId);
+          socket.emit("prev", roomId, user.userId);
         }
       });
 

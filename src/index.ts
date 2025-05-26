@@ -24,15 +24,13 @@ app.get("/", (req, res) => {
 });
 
 const rooms = new Map<string, Troom>();
-let joinedRoom: string;
 
 io.on("connection", (socket) => {
   console.log("user is connected", socket.id);
 
   socket.on("join-room", (data: { roomId: string; userId: string }) => {
-    console.log(data.roomId, "🎈🎈🎈🎈");
-    joinedRoom = data.roomId;
-    if (!data.roomId) return;
+    socket.data.joinedRoom = data.roomId;
+    if (!socket.data.joinedRoom) return;
     console.log(`user ${data.userId} has joined the room `);
     socket.join(data.roomId);
 
@@ -57,7 +55,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("add-data", (ytId, roomId) => {
+  socket.on("add-data", (ytId: string, roomId: string) => {
     const roomData = rooms.get(roomId);
     if (roomData && !roomData.musicQueue.includes(ytId)) {
       roomData.musicQueue.push(ytId);
@@ -74,7 +72,23 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("next", (roomId, userId) => {
+  socket.on("next", (roomId: string, userId: string) => {
+    const roomData = rooms.get(roomId);
+    if (
+      roomData &&
+      userId === roomData.creator &&
+      roomData.current < roomData.musicQueue.length - 1
+    ) {
+      roomData.current++;
+      io.to(roomId).emit("sync-data", {
+        musicQueue: roomData.musicQueue,
+        current: roomData.current,
+        creator: roomData.creator,
+      });
+    }
+  });
+
+  socket.on("auto-next", (roomId: string) => {
     const roomData = rooms.get(roomId);
     if (roomData && roomData.current < roomData.musicQueue.length - 1) {
       roomData.current++;
@@ -86,15 +100,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("ended", (roomId) => {
+  socket.on("ended", (roomId: string) => {
     const roomData = rooms.get(roomId);
     if (roomData && roomData.current === roomData.musicQueue.length - 1)
       roomData.playerIdle = true;
   });
 
-  socket.on("prev", (roomId, userId) => {
+  socket.on("prev", (roomId: string, userId: string) => {
     const roomData = rooms.get(roomId);
-    if (roomData && roomData.current > 0) {
+    if (roomData && roomData.creator === userId && roomData.current > 0) {
       roomData.current--;
       io.to(roomId).emit("sync-data", {
         musicQueue: roomData.musicQueue,
@@ -104,19 +118,28 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("play-from-index", (index, roomId, userId) => {
-    const roomData = rooms.get(roomId);
-    if (roomData && index >= 0 && index < roomData.musicQueue.length) {
-      roomData.current = index;
+  socket.on(
+    "play-from-index",
+    (index: number, roomId: string, userId: string) => {
+      const roomData = rooms.get(roomId);
+      if (
+        roomData &&
+        roomData.creator === userId &&
+        index >= 0 &&
+        index < roomData.musicQueue.length
+      ) {
+        roomData.current = index;
 
-      io.to(roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
+        io.to(roomId).emit("sync-data", {
+          musicQueue: roomData.musicQueue,
+          current: roomData.current,
+          creator: roomData.creator,
+        });
+      }
     }
-  });
+  );
   socket.on("disconnect", async () => {
+    const joinedRoom = socket.data.joinedRoom;
     if (!joinedRoom) return;
 
     const socketsInRoom = await io.in(joinedRoom).fetchSockets();
@@ -125,7 +148,7 @@ io.on("connection", (socket) => {
       rooms.delete(joinedRoom);
     }
 
-    console.log("user is disconnected", joinedRoom, rooms, socketsInRoom);
+    console.log("user is disconnected");
   });
 });
 
