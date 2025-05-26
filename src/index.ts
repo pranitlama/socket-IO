@@ -80,6 +80,10 @@ io.on("connection", (socket) => {
       roomData.current < roomData.musicQueue.length - 1
     ) {
       roomData.current++;
+      if (roomData.current > 3) {
+        roomData.musicQueue.shift();
+        roomData.current--;
+      }
       io.to(roomId).emit("sync-data", {
         musicQueue: roomData.musicQueue,
         current: roomData.current,
@@ -92,6 +96,10 @@ io.on("connection", (socket) => {
     const roomData = rooms.get(roomId);
     if (roomData && roomData.current < roomData.musicQueue.length - 1) {
       roomData.current++;
+      if (roomData.current > 3) {
+        roomData.musicQueue.shift();
+        roomData.current--;
+      }
       io.to(roomId).emit("sync-data", {
         musicQueue: roomData.musicQueue,
         current: roomData.current,
@@ -129,6 +137,12 @@ io.on("connection", (socket) => {
         index < roomData.musicQueue.length
       ) {
         roomData.current = index;
+
+        if (roomData.current > 3) {
+          const songsToRemove = roomData.current - 3;
+          roomData.musicQueue.splice(0, songsToRemove);
+          roomData.current -= songsToRemove;
+        }
 
         io.to(roomId).emit("sync-data", {
           musicQueue: roomData.musicQueue,

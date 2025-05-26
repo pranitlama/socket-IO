@@ -14,7 +14,8 @@
   </head>
   <body>
     <section class="main-section">
-      <div id="player"></div>
+      <div id="player" style="display: none"></div>
+
       <div class="right-section">
         <div class="input-container">
           <input id="input-val" placeholder="YouTube Video ID" />
@@ -23,7 +24,7 @@
         <div id="musicContainer"></div>
       </div>
     </section>
-    <div class="bottom-section">
+    <div class="bottom-section" id="bottomSection">
       <div class="bottom-button">
         <button id="prev">
           <svg
@@ -105,9 +106,11 @@
       const inputVal = document.getElementById("input-val");
       const sendBtn = document.getElementById("send-btn");
       const musicContainer = document.getElementById("musicContainer");
+      const playerContainer = document.getElementById("player");
       const prevBtn = document.getElementById("prev");
       const nextBtn = document.getElementById("next");
       const toast = document.getElementById("toast");
+      const bottomSection = document.getElementById("bottomSection");
       let socket;
 
       const user = JSON.parse(sessionStorage.getItem("user"));
@@ -128,7 +131,8 @@
       if (!user) {
         window.location.href = "/";
       } else {
-        socket = io("https://socket-ios.onrender.com");
+        // socket = io("https://socket-ios.onrender.com");
+        socket = io("http://localhost:3000");
         socket.on("connect", () => {
           socket.emit("join-room", {
             roomId: roomId || socket.id,
@@ -151,7 +155,6 @@
         newDiv.append(item);
 
         item.textContent = index;
-
         if (isCreator) {
           newDiv.addEventListener("click", () => {
             if (current !== index) {
@@ -177,7 +180,9 @@
       let playerReady = false;
       let bufferedData = null;
       let hasEnded;
-      let isCreator;
+      let isCreator = false;
+      let ytReady = false;
+      let shouldCreatePlayer = false;
 
       function showToast(message) {
         toast.className = "show";
@@ -188,9 +193,74 @@
       }
 
       window.onYouTubeIframeAPIReady = function () {
+        ytReady = true;
+        if (shouldCreatePlayer) {
+          createPlayer();
+        }
+        //   player = new YT.Player("player", {
+        //     videoId: "",
+        //     playerVars: {
+        //       playsinline: 1,
+        //     },
+        //     events: {
+        //       onReady: (event) => {
+        //         playerReady = true;
+        //         if (bufferedData) {
+        //           syncPlayerData(bufferedData);
+        //           bufferedData = null;
+        //         }
+        //       },
+        //       onStateChange: (event) => {
+        //         hasEnded = event.data === YT.PlayerState.ENDED;
+        //         pauseIcon.style.display = "inline";
+        //         playIcon.style.display = "none";
+        //         if (event.data == YT.PlayerState.ENDED) {
+        //           if (current === musicQueue.length - 1) {
+        //             socket.emit("ended", roomId);
+        //           } else {
+        //             socket.emit("auto-next", roomId);
+        //           }
+        //         }
+        //         if (event.data == YT.PlayerState.PLAYING) {
+        //           pauseIcon.style.display = "none";
+        //           playIcon.style.display = "inline";
+        //           updateCurrentTrackUI();
+        //           currentVId = player.getVideoData().video_id;
+        //           currentTitle.textContent = player.videoTitle;
+        //           currentArtist.textContent = player.playerInfo.videoData.author;
+        //         }
+        //         if (event.data == YT.PlayerState.PAUSED) {
+        //           pauseIcon.style.display = "inline";
+        //           playIcon.style.display = "none";
+        //         }
+        //       },
+        //     },
+        //   });
+      };
+
+      function syncPlayerData(data) {
+        current = data.current;
+        musicQueue = data.musicQueue;
+        musicContainer.innerHTML = "";
+
+        musicQueue.forEach((element, index) => {
+          addList(element, index);
+        });
+
+        if (
+          player &&
+          musicQueue.length > 0 &&
+          currentVId != musicQueue[current]
+        ) {
+          currentImg.src = `https://img.youtube.com/vi/${musicQueue[current]}/hqdefault.jpg`;
+
+          player.loadVideoById(musicQueue[current]);
+        }
+        updateCurrentTrackUI();
+      }
+
+      function createPlayer() {
         player = new YT.Player("player", {
-          height: "390",
-          width: "640",
           videoId: "",
           playerVars: {
             playsinline: 1,
@@ -229,36 +299,28 @@
             },
           },
         });
-      };
-
-      function syncPlayerData(data) {
-        current = data.current;
-        musicQueue = data.musicQueue;
-        musicContainer.innerHTML = "";
-        musicQueue.forEach((element, index) => {
-          addList(element, index);
-        });
-
-        if (
-          player &&
-          musicQueue.length > 0 &&
-          currentVId != musicQueue[current]
-        ) {
-          currentImg.src = `https://img.youtube.com/vi/${musicQueue[current]}/hqdefault.jpg`;
-
-          player.loadVideoById(musicQueue[current]);
-        }
-        updateCurrentTrackUI();
       }
 
       socket.on("sync-data", (data) => {
+        isCreator = user.userId === data.creator;
+        if (isCreator) {
+          playerContainer.style.display = "block";
+          if (isCreator && !player) {
+            if (ytReady) {
+              createPlayer();
+            } else {
+              shouldCreatePlayer = true;
+            }
+          }
+        } else {
+          playerContainer.style.display = "none";
+          bottomSection.style.display = "none";
+        }
+        syncPlayerData(data);
         if (playerReady) {
-          isCreator = user.userId === data.creator;
-          console.log(isCreator, user.userId, data.creator);
           nextBtn.disabled = !isCreator;
           prevBtn.disabled = !isCreator;
           pausePlayBtn.disabled = !isCreator;
-          syncPlayerData(data);
         } else {
           bufferedData = data;
         }

@@ -6,8 +6,13 @@
   margin: 0;
   padding: 0;
   font-family: "Roboto", sans-serif;
+}
+
+body {
   background-color: #151515;
   color: #fff;
+  height: 100vh;
+  width: 100%;
 }
 
 ::-webkit-scrollbar {
@@ -28,17 +33,13 @@
 }
 
 .main-section {
-  height: 100%;
-
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   gap: 20px;
   padding: 20px;
-}
-
-#player {
-  flex: 1;
-  height: 610px;
+  flex-wrap: wrap;
+  height: 85%;
 }
 
 .input-container {
@@ -107,18 +108,18 @@ button {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 }
 
 .bottom-section {
-  position: absolute;
   display: grid;
   grid-template-columns: auto auto auto;
 
-  bottom: 0;
-  left: 0;
   width: 100%;
-  height: 80px;
-  background: black;
+
+  height: 10%;
+  background-color: black;
+  padding: 20px;
 }
 
 .bottom-button {
@@ -281,5 +282,61 @@ button {
   to {
     top: 0;
     opacity: 0;
+  }
+}
+@media (min-width: 768px) {
+  .main-section {
+    flex-direction: row;
+  }
+
+  #player {
+    flex: 1;
+    height: 100%;
+  }
+
+  .right-section {
+    max-width: 400px;
+  }
+}
+
+.input-container {
+  flex-direction: column;
+}
+
+@media (min-width: 500px) {
+  .input-container {
+    flex-direction: row;
+  }
+}
+
+.bottom-section {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  text-align: center;
+  gap: 10px;
+  height: auto;
+}
+
+.bottom-center {
+  justify-content: center;
+}
+
+.bottom-button {
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .bottom-section {
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto;
+    height: 15%;
+  }
+
+  .bottom-button {
+    justify-content: flex-start;
+  }
+
+  .bottom-center {
+    justify-content: flex-start;
   }
 }
