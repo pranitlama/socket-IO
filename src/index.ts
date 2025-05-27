@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { join } from "node:path";
+import { handleSocket } from "./socket";
 
 type Troom = {
   current: number;
@@ -22,149 +23,154 @@ app.use(express.static(join(__dirname, "public")));
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"));
 });
+app.get("/player", (req, res) => {
+  res.sendFile(join(__dirname, "public", "player.html"));
+});
 
 const rooms = new Map<string, Troom>();
 
-io.on("connection", (socket) => {
-  console.log("user is connected", socket.id);
+// io.on("connection", (socket) => {
+//   console.log("user is connected", socket.id);
 
-  socket.on("join-room", (data: { roomId: string; userId: string }) => {
-    socket.data.joinedRoom = data.roomId;
-    if (!socket.data.joinedRoom) return;
-    console.log(`user ${data.userId} has joined the room `);
-    socket.join(data.roomId);
+//   socket.on("join-room", (data: { roomId: string; userId: string }) => {
+//     socket.data.joinedRoom = data.roomId;
+//     if (!socket.data.joinedRoom) return;
+//     console.log(`user ${data.userId} has joined the room `);
+//     socket.join(data.roomId);
 
-    socket.emit("room-created", data.roomId);
+//     socket.emit("room-created", data.roomId);
 
-    if (!rooms.has(data.roomId)) {
-      rooms.set(data.roomId, {
-        current: 0,
-        creator: data.userId,
-        musicQueue: [],
-        playerIdle: false,
-      });
-    }
-    const roomData = rooms.get(data.roomId);
-    console.log(rooms);
-    if (roomData) {
-      io.to(data.roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
-    }
-  });
+//     if (!rooms.has(data.roomId)) {
+//       rooms.set(data.roomId, {
+//         current: 0,
+//         creator: data.userId,
+//         musicQueue: [],
+//         playerIdle: false,
+//       });
+//     }
+//     const roomData = rooms.get(data.roomId);
+//     console.log(rooms);
+//     if (roomData) {
+//       io.to(data.roomId).emit("sync-data", {
+//         musicQueue: roomData.musicQueue,
+//         current: roomData.current,
+//         creator: roomData.creator,
+//       });
+//     }
+//   });
 
-  socket.on("add-data", (ytId: string, roomId: string) => {
-    const roomData = rooms.get(roomId);
-    if (roomData && !roomData.musicQueue.includes(ytId)) {
-      roomData.musicQueue.push(ytId);
+//   socket.on("add-data", (ytId: string, roomId: string) => {
+//     const roomData = rooms.get(roomId);
+//     if (roomData && !roomData.musicQueue.includes(ytId)) {
+//       roomData.musicQueue.push(ytId);
 
-      if (roomData.playerIdle) {
-        roomData.current++;
-        roomData.playerIdle = false;
-      }
-      io.to(roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
-    }
-  });
+//       if (roomData.playerIdle) {
+//         roomData.current++;
+//         roomData.playerIdle = false;
+//       }
+//       io.to(roomId).emit("sync-data", {
+//         musicQueue: roomData.musicQueue,
+//         current: roomData.current,
+//         creator: roomData.creator,
+//       });
+//     }
+//   });
 
-  socket.on("next", (roomId: string, userId: string) => {
-    const roomData = rooms.get(roomId);
-    if (
-      roomData &&
-      userId === roomData.creator &&
-      roomData.current < roomData.musicQueue.length - 1
-    ) {
-      roomData.current++;
-      if (roomData.current > 3) {
-        roomData.musicQueue.shift();
-        roomData.current--;
-      }
-      io.to(roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
-    }
-  });
+//   socket.on("next", (roomId: string, userId: string) => {
+//     const roomData = rooms.get(roomId);
+//     if (
+//       roomData &&
+//       userId === roomData.creator &&
+//       roomData.current < roomData.musicQueue.length - 1
+//     ) {
+//       roomData.current++;
+//       if (roomData.current > 3) {
+//         roomData.musicQueue.shift();
+//         roomData.current--;
+//       }
+//       io.to(roomId).emit("sync-data", {
+//         musicQueue: roomData.musicQueue,
+//         current: roomData.current,
+//         creator: roomData.creator,
+//       });
+//     }
+//   });
 
-  socket.on("auto-next", (roomId: string) => {
-    const roomData = rooms.get(roomId);
-    if (roomData && roomData.current < roomData.musicQueue.length - 1) {
-      roomData.current++;
-      if (roomData.current > 3) {
-        roomData.musicQueue.shift();
-        roomData.current--;
-      }
-      io.to(roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
-    }
-  });
+//   socket.on("auto-next", (roomId: string) => {
+//     const roomData = rooms.get(roomId);
+//     if (roomData && roomData.current < roomData.musicQueue.length - 1) {
+//       roomData.current++;
+//       if (roomData.current > 3) {
+//         roomData.musicQueue.shift();
+//         roomData.current--;
+//       }
+//       io.to(roomId).emit("sync-data", {
+//         musicQueue: roomData.musicQueue,
+//         current: roomData.current,
+//         creator: roomData.creator,
+//       });
+//     }
+//   });
 
-  socket.on("ended", (roomId: string) => {
-    const roomData = rooms.get(roomId);
-    if (roomData && roomData.current === roomData.musicQueue.length - 1)
-      roomData.playerIdle = true;
-  });
+//   socket.on("ended", (roomId: string) => {
+//     const roomData = rooms.get(roomId);
+//     if (roomData && roomData.current === roomData.musicQueue.length - 1)
+//       roomData.playerIdle = true;
+//   });
 
-  socket.on("prev", (roomId: string, userId: string) => {
-    const roomData = rooms.get(roomId);
-    if (roomData && roomData.creator === userId && roomData.current > 0) {
-      roomData.current--;
-      io.to(roomId).emit("sync-data", {
-        musicQueue: roomData.musicQueue,
-        current: roomData.current,
-        creator: roomData.creator,
-      });
-    }
-  });
+//   socket.on("prev", (roomId: string, userId: string) => {
+//     const roomData = rooms.get(roomId);
+//     if (roomData && roomData.creator === userId && roomData.current > 0) {
+//       roomData.current--;
+//       io.to(roomId).emit("sync-data", {
+//         musicQueue: roomData.musicQueue,
+//         current: roomData.current,
+//         creator: roomData.creator,
+//       });
+//     }
+//   });
 
-  socket.on(
-    "play-from-index",
-    (index: number, roomId: string, userId: string) => {
-      const roomData = rooms.get(roomId);
-      if (
-        roomData &&
-        roomData.creator === userId &&
-        index >= 0 &&
-        index < roomData.musicQueue.length
-      ) {
-        roomData.current = index;
+//   socket.on(
+//     "play-from-index",
+//     (index: number, roomId: string, userId: string) => {
+//       const roomData = rooms.get(roomId);
+//       if (
+//         roomData &&
+//         roomData.creator === userId &&
+//         index >= 0 &&
+//         index < roomData.musicQueue.length
+//       ) {
+//         roomData.current = index;
 
-        if (roomData.current > 3) {
-          const songsToRemove = roomData.current - 3;
-          roomData.musicQueue.splice(0, songsToRemove);
-          roomData.current -= songsToRemove;
-        }
+//         if (roomData.current > 3) {
+//           const songsToRemove = roomData.current - 3;
+//           roomData.musicQueue.splice(0, songsToRemove);
+//           roomData.current -= songsToRemove;
+//         }
 
-        io.to(roomId).emit("sync-data", {
-          musicQueue: roomData.musicQueue,
-          current: roomData.current,
-          creator: roomData.creator,
-        });
-      }
-    }
-  );
-  socket.on("disconnect", async () => {
-    const joinedRoom = socket.data.joinedRoom;
-    if (!joinedRoom) return;
+//         io.to(roomId).emit("sync-data", {
+//           musicQueue: roomData.musicQueue,
+//           current: roomData.current,
+//           creator: roomData.creator,
+//         });
+//       }
+//     }
+//   );
+//   socket.on("disconnect", async () => {
+//     const joinedRoom = socket.data.joinedRoom;
+//     if (!joinedRoom) return;
 
-    const socketsInRoom = await io.in(joinedRoom).fetchSockets();
+//     const socketsInRoom = await io.in(joinedRoom).fetchSockets();
 
-    if (socketsInRoom.length === 0) {
-      rooms.delete(joinedRoom);
-    }
+//     if (socketsInRoom.length === 0) {
+//       rooms.delete(joinedRoom);
+//     }
 
-    console.log("user is disconnected");
-  });
-});
+//     console.log("user is disconnected");
+//   });
+// });
+
+handleSocket(io);
 
 server.listen(3000, () => {
   console.log("server running at http://localhost:3000");

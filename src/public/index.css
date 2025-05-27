@@ -32,169 +32,6 @@ body {
   background: #555;
 }
 
-.main-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 20px;
-  flex-wrap: wrap;
-  height: 85%;
-}
-
-.input-container {
-  display: flex;
-  gap: 20px;
-}
-
-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#input-val {
-  width: 100%;
-  height: 10px;
-  border: 0;
-  border-radius: 5px;
-  padding: 15px;
-  background: black;
-  opacity: 0.4;
-  color: white;
-}
-
-#input-val:focus {
-  outline: none;
-}
-
-#send-btn {
-  background: black;
-  height: 100%;
-  width: 100px;
-  border: 0;
-  border-radius: 5px;
-  opacity: 0.4;
-  color: white;
-}
-
-#send-btn:hover {
-  cursor: pointer;
-}
-
-#musicContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 550px;
-  overflow: auto;
-  padding-inline: 5px;
-}
-.queue-card {
-  background: black;
-
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-}
-
-.queue-card img {
-  height: 50px;
-  width: 50px;
-  object-fit: cover;
-}
-
-.right-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-}
-
-.bottom-section {
-  display: grid;
-  grid-template-columns: auto auto auto;
-
-  width: 100%;
-
-  height: 10%;
-  background-color: black;
-  padding: 20px;
-}
-
-.bottom-button {
-  display: flex;
-  padding: 0;
-  align-items: center;
-  height: 100%;
-}
-
-.bottom-button button {
-  background-color: transparent;
-
-  height: 100%;
-  width: 100px;
-  border: 0;
-  color: white;
-}
-
-.bottom-center {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bottom-button button:hover {
-  cursor: pointer;
-}
-
-#currentArtist {
-  font-size: 16px;
-  margin: 0;
-}
-
-#currentTitle {
-  font-size: 14px;
-  color: gray;
-}
-
-#currentImg {
-  height: 50px;
-  width: 50px;
-  object-fit: cover;
-}
-
-#toast {
-  visibility: hidden;
-  min-width: 250px;
-  margin-left: -125px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 2px;
-  padding: 16px;
-  position: fixed;
-  z-index: 1;
-  left: 50%;
-  top: 80px;
-}
-
-#play-icon {
-  display: none;
-}
-
-.queue-card.inactive-track {
-  background-color: black;
-  opacity: 0.3;
-}
-
-#toast.show {
-  visibility: visible;
-
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-
 /* index css */
 
 .join-container {
@@ -202,10 +39,13 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  padding: 0 20px;
+  width: 100%;
+  max-width: 400px;
 }
 
 .form {
-  width: 400px;
+  width: 100%;
   height: 400px;
   display: flex;
   flex-direction: column;
@@ -241,102 +81,178 @@ button {
   cursor: pointer;
 }
 
-@-webkit-keyframes fadein {
-  from {
-    top: 0;
-    opacity: 0;
-  }
-  to {
-    top: 80px;
-    opacity: 1;
-  }
+/* player css */
+
+.main-section {
+  position: relative;
+  width: 100%;
+  padding: 20px 20px 0 20px;
+  display: flex;
+  gap: 20px;
+  padding-bottom: 100px;
 }
 
-@keyframes fadein {
-  from {
-    top: 0;
-    opacity: 0;
-  }
-  to {
-    top: 80px;
-    opacity: 1;
-  }
+.player-wrapper {
+  width: 70%;
 }
 
-@-webkit-keyframes fadeout {
-  from {
-    top: 80px;
-    opacity: 1;
-  }
-  to {
-    top: 0;
-    opacity: 0;
-  }
+#player {
+  width: 100%;
+  flex: 1;
 }
 
-@keyframes fadeout {
-  from {
-    top: 80px;
-    opacity: 1;
-  }
-  to {
-    top: 0;
-    opacity: 0;
-  }
+.right-section {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
-@media (min-width: 768px) {
-  .main-section {
-    flex-direction: row;
-  }
 
-  #player {
-    flex: 1;
-    height: 100%;
-  }
-
-  .right-section {
-    max-width: 400px;
-  }
+.queue-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 .input-container {
-  flex-direction: column;
+  display: flex;
+  gap: 20px;
 }
 
-@media (min-width: 500px) {
-  .input-container {
-    flex-direction: row;
-  }
+#input-val {
+  width: 100%;
+  height: 40px;
+  border: 0;
+  border-radius: 5px;
+  padding: 15px;
+  background: black;
+  opacity: 0.4;
+  color: white;
+}
+
+#input-val:focus {
+  outline: none;
+}
+
+#send-btn {
+  background: black;
+  height: 40px;
+  width: 100px;
+  border: 0;
+  border-radius: 5px;
+  opacity: 0.4;
+  color: white;
+}
+
+#send-btn:hover {
+  cursor: pointer;
+}
+
+.queue-list {
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  gap: 20px;
+  background-color: #232323;
+  width: 100%;
+  padding: 15px;
+}
+
+.queue-list img {
+  height: 60px;
+  width: 60px;
+  object-fit: contain;
+}
+
+.queue-list p {
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .bottom-section {
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
-  text-align: center;
-  gap: 10px;
-  height: auto;
-}
-
-.bottom-center {
-  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: black;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  padding: 10px 20px;
+  height: 100px;
 }
 
 .bottom-button {
+  display: flex;
+  gap: 20px;
   justify-content: center;
 }
 
-@media (min-width: 768px) {
+.bottom-button button {
+  background-color: black;
+  color: white;
+  border: none;
+}
+.bottom-button button:hover {
+  cursor: pointer;
+}
+
+.bottom-center {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+
+#currentImg {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+#currentArtist {
+  font-size: 16px;
+  margin: 0;
+}
+
+#currentTitle {
+  font-size: 14px;
+  color: gray;
+}
+
+#users {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: end;
+  font-size: 12px;
+  color: gray;
+}
+
+@media only screen and (max-width: 1024px) {
+  .main-section {
+    flex-direction: column;
+  }
+  .player-wrapper {
+    width: 100%;
+  }
+  .right-section {
+    width: 100%;
+  }
+
+  #users {
+    display: none;
+  }
+
   .bottom-section {
-    grid-template-columns: auto auto auto;
-    grid-template-rows: auto;
-    height: 15%;
-  }
-
-  .bottom-button {
-    justify-content: flex-start;
-  }
-
-  .bottom-center {
-    justify-content: flex-start;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1rem;
   }
 }
