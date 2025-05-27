@@ -131,8 +131,8 @@
       if (!user) {
         window.location.href = "/";
       } else {
-        // socket = io("https://socket-ios.onrender.com");
-        socket = io("http://localhost:3000");
+        socket = io("https://socket-ios.onrender.com");
+        // socket = io("http://localhost:3000");
         socket.on("connect", () => {
           socket.emit("join-room", {
             roomId: roomId || socket.id,
