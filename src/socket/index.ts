@@ -6,6 +6,7 @@ export type Troom = {
   creator: string;
   musicQueue: string[];
   current: number;
+  isPlayerIdle: boolean;
 };
 
 const rooms = new Map<string, Troom>();

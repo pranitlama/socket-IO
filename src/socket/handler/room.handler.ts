@@ -20,11 +20,13 @@ export const handleRoom = (
         if (!rooms.has(data.roomId)) {
           rooms.set(data.roomId, {
             creator: data.userId,
-            musicQueue: ["kPBzTxZQG5Q"],
+            musicQueue: [],
             current: 0,
+            isPlayerIdle: false,
           });
         }
         const roomData = rooms.get(data.roomId);
+        console.log(roomData, data);
         if (roomData) {
           cb({
             status: true,
@@ -40,7 +42,7 @@ export const handleRoom = (
           });
         }
       } catch (error) {
-        cb({ status: false, message: "Failed to join the rooom" });
+        cb({ status: false, message: "Failed to join the room" });
       }
     }
   );
