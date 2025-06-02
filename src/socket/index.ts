@@ -9,14 +9,12 @@ export type Troom = {
   isPlayerIdle: boolean;
 };
 
-const rooms = new Map<string, Troom>();
-
 export const handleSocket = (io: Server) => {
   io.on("connection", (socket: Socket) => {
     console.log("user is connected", socket.id);
 
-    handleRoom(io, socket, rooms);
-    handleQueue(io, socket, rooms);
+    handleRoom(io, socket);
+    handleQueue(io, socket);
 
     socket.on("disconnect", () => {
       console.log(

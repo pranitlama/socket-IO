@@ -1,14 +1,11 @@
 import { Server, Socket } from "socket.io";
 import { Troom } from "..";
+import { client } from "./redis.handler";
 
-export const handleRoom = (
-  io: Server,
-  socket: Socket,
-  rooms: Map<string, Troom>
-) => {
+export const handleRoom = (io: Server, socket: Socket) => {
   socket.on(
     "join-room",
-    (data: { userId: string; roomId: string; username: string }, cb) => {
+    async (data: { userId: string; roomId: string; username: string }, cb) => {
       try {
         if (!data.roomId || !data.userId || !data.roomId) return;
         socket.data.roomId = data.roomId;
@@ -16,18 +13,32 @@ export const handleRoom = (
         socket.data.username = data.username;
 
         socket.join(data.roomId);
-
-        if (!rooms.has(data.roomId)) {
-          rooms.set(data.roomId, {
+        const roomString = await client.get(data.roomId);
+        console.log(roomString);
+        if (!roomString) {
+          await client.set(
+            data.roomId,
+            JSON.stringify({
+              creator: data.userId,
+              musicQueue: [],
+              current: 0,
+              isPlayerIdle: false,
+            })
+          );
+          cb({
+            status: true,
+            message: "Joined Room",
+            roomId: data.roomId,
+            isCreator: data.userId,
+          });
+          io.to(data.roomId).emit("announce", data.username);
+          io.to(data.roomId).emit("sync-data", {
             creator: data.userId,
             musicQueue: [],
             current: 0,
-            isPlayerIdle: false,
           });
-        }
-        const roomData = rooms.get(data.roomId);
-        console.log(roomData, data);
-        if (roomData) {
+        } else {
+          const roomData: Troom = JSON.parse(roomString);
           cb({
             status: true,
             message: "Joined Room",

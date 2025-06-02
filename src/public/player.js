@@ -18,9 +18,11 @@ if (!user) {
   const prevBtn = document.getElementById("prev");
   const videoContainer = document.querySelector(".queue-wrapper");
   let player;
+  let shouldCreatePlayer = false;
 
   window.onYouTubeIframeAPIReady = () => {
     console.log("inside", "🎈🎈🎈");
+    if (!shouldCreatePlayer) return;
     player = new YT.Player("player", {
       videoId: musicQueue[current],
       playerVars: {
