@@ -20,9 +20,8 @@ if (!user) {
   let player;
   let shouldCreatePlayer = false;
 
-  window.onYouTubeIframeAPIReady = () => {
-    console.log("inside", "🎈🎈🎈");
-    if (!shouldCreatePlayer) return;
+  function createPlayer() {
+    console.log("inside createPlayer");
     player = new YT.Player("player", {
       videoId: musicQueue[current],
       playerVars: {
@@ -43,6 +42,12 @@ if (!user) {
         },
       },
     });
+  }
+
+  window.onYouTubeIframeAPIReady = () => {
+    if (!shouldCreatePlayer) return;
+    console.log("creating player");
+    createPlayer();
   };
 
   function onPlayerReady(event) {
@@ -83,7 +88,7 @@ if (!user) {
           } else {
             document.querySelector(".main-section").style.flexDirection =
               "column-reverse";
-            document.querySelector(".right-section").style.width = "100%";
+            document.querySelector(".right-section").classList.add("w-full");
             document.getElementById("player").style.display = "none";
             document.querySelector(".bottom-section").style.display = "none";
           }
@@ -137,6 +142,15 @@ if (!user) {
       current === musicQueue.length - 1
     )
       player.loadVideoById(musicQueue[current]);
+  });
+
+  socket.on("new-creator", () => {
+    if (!player) createPlayer();
+    document.getElementById("player").style.display = "flex";
+    document.getElementById("main-section").style.display = "flex";
+    document.getElementById("main-section").style.flexDirection = "row";
+    document.querySelector(".right-section").classList.remove("w-full");
+    document.querySelector(".bottom-section").style.display = "grid";
   });
 
   function showToast(text, success) {

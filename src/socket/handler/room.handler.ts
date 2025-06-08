@@ -29,7 +29,7 @@ export const handleRoom = (io: Server, socket: Socket) => {
             status: true,
             message: "Joined Room",
             roomId: data.roomId,
-            isCreator: data.userId,
+            isCreator: true,
           });
           io.to(data.roomId).emit("announce", data.username);
           io.to(data.roomId).emit("sync-data", {
