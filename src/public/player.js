@@ -133,15 +133,14 @@ if (!user) {
 
   socket.on("sync-data", (data) => {
     console.log("syncing", data);
+    const prevVideoId = musicQueue[current];
     musicQueue = data.musicQueue;
     current = data.current;
     renderQueue();
 
-    if (
-      (player && musicQueue.length === 1) ||
-      current === musicQueue.length - 1
-    )
+    if (player && musicQueue[current] !== prevVideoId) {
       player.loadVideoById(musicQueue[current]);
+    }
   });
 
   socket.on("new-creator", () => {

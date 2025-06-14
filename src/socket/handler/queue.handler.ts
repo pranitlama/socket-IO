@@ -31,7 +31,10 @@ export const handleQueue = (io: Server, socket: Socket) => {
       roomData.creator === userId &&
       roomData.current < roomData.musicQueue.length - 1
     ) {
+      console.log(roomData.musicQueue, roomData.current, "before");
+      roomData.musicQueue.shift();
       roomData.current++;
+      console.log(roomData.musicQueue, roomData.current, "after");
 
       await client.set(socket.data.roomId, JSON.stringify(roomData));
       io.to(socket.data.roomId).emit("sync-data", {
