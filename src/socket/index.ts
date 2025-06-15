@@ -27,6 +27,7 @@ export const handleSocket = (io: Server) => {
       const socketInRooms = await io.in(roomId).fetchSockets();
       const otherUser = socketInRooms.filter((item) => item.id !== userId);
       if (otherUser.length === 0) {
+        console.log('inside this okk')
         await client.del(roomId);
       } else {
         const newCreator = otherUser[0].id;
