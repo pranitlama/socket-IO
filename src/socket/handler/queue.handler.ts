@@ -7,7 +7,12 @@ export const handleQueue = (io: Server, socket: Socket) => {
     const roomString = await client.get(socket.data.roomId);
     if (roomString) {
       const roomData: Troom = JSON.parse(roomString);
-      roomData.musicQueue.push(ytId);
+      const hasId = roomData.musicQueue.some((item) => item.videoId === ytId);
+      if (hasId) return cb({ status: false, msg: "Already in the queue" });
+      roomData.musicQueue.push({
+        username: socket.data.username,
+        videoId: ytId,
+      });
       if (roomData.isPlayerIdle) {
         roomData.current = roomData.musicQueue.length - 1;
         roomData.isPlayerIdle = false;
@@ -32,11 +37,9 @@ export const handleQueue = (io: Server, socket: Socket) => {
       roomData.current < roomData.musicQueue.length - 1
     ) {
       roomData.current++;
-      if(roomData.current >=2)
-      {
-        
-        roomData.musicQueue.splice(0,2);
-        roomData.current=0;
+      if (roomData.current >= 2) {
+        roomData.musicQueue.splice(0, 2);
+        roomData.current = 0;
       }
 
       await client.set(socket.data.roomId, JSON.stringify(roomData));
@@ -69,11 +72,34 @@ export const handleQueue = (io: Server, socket: Socket) => {
     const roomData: Troom = JSON.parse(roomString);
     if (roomData && roomData.current < roomData.musicQueue.length - 1) {
       roomData.current++;
-       if(roomData.current >=2)
-      {
-        
-        roomData.musicQueue.splice(0,2);
-        roomData.current=0;
+      if (roomData.current >= 2) {
+        roomData.musicQueue.splice(0, 2);
+        roomData.current = 0;
+      }
+
+      await client.set(socket.data.roomId, JSON.stringify(roomData));
+      io.to(socket.data.roomId).emit("sync-data", {
+        musicQueue: roomData.musicQueue,
+        current: roomData.current,
+      });
+      cb({ status: true });
+    }
+  });
+  socket.on("list-play", async (listId, cb) => {
+    const roomString = await client.get(socket.data.roomId);
+    if (!roomString) return cb({ satus: false });
+    const roomData: Troom = JSON.parse(roomString);
+    if (
+      listId >= 0 &&
+      listId <= roomData.musicQueue.length - 1 &&
+      roomData.creator === socket.data.userId
+    ) {
+      let songsToRemove = listId - 2;
+      if (songsToRemove > 0) {
+        roomData.musicQueue.splice(0, songsToRemove);
+        roomData.current = listId - songsToRemove;
+      } else {
+        roomData.current = listId;
       }
 
       await client.set(socket.data.roomId, JSON.stringify(roomData));

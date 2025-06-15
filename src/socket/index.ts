@@ -5,7 +5,7 @@ import { client } from "./handler/redis.handler";
 
 export type Troom = {
   creator: string;
-  musicQueue: string[];
+  musicQueue: { username: string; videoId: string }[];
   current: number;
   isPlayerIdle: boolean;
 };
@@ -27,7 +27,7 @@ export const handleSocket = (io: Server) => {
       const socketInRooms = await io.in(roomId).fetchSockets();
       const otherUser = socketInRooms.filter((item) => item.id !== userId);
       if (otherUser.length === 0) {
-        console.log('inside this okk')
+        console.log("inside this okk");
         await client.del(roomId);
       } else {
         const newCreator = otherUser[0].id;

@@ -23,7 +23,7 @@ if (!user) {
   function createPlayer() {
     console.log("inside createPlayer");
     player = new YT.Player("player", {
-      videoId: musicQueue[current],
+      videoId: musicQueue.length != 0 ? musicQueue[current].videoId : "",
       playerVars: {
         playsinline: 1,
       },
@@ -36,7 +36,7 @@ if (!user) {
             (event.data === 150 && current < musicQueue.length)
           ) {
             socket.emit("auto-next", (cb) => {
-              if (cb.status) player.loadVideoById(musicQueue[current]);
+              if (cb.status) player.loadVideoById(musicQueue[current].videoId);
             });
           }
         },
@@ -56,6 +56,18 @@ if (!user) {
 
   function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.PLAYING) {
+      const videoData = player.getVideoData();
+      if (videoData && musicQueue[current].videoId) {
+        document.getElementById("bottom-center").style.visibility = "visible";
+        document.getElementById(
+          "currentImg"
+        ).src = `https://img.youtube.com/vi/${musicQueue[current].videoId}/hqdefault.jpg`;
+
+        document.getElementById("currentArtist").innerText = videoData.author;
+        document.getElementById("currentTitle").innerText = videoData.title;
+      } else {
+        document.getElementById("bottom-center").style.display = "hidden";
+      }
       document.getElementById("pause-icon").style.display = "none";
       document.getElementById("play-icon").style.display = "block";
     } else if (event.data == YT.PlayerState.ENDED) {
@@ -63,7 +75,7 @@ if (!user) {
       document.getElementById("play-icon").style.display = "none";
       if (current < musicQueue.length - 1) {
         socket.emit("auto-next", (res) => {
-          if (res.status) player.loadVideoById(musicQueue[current]);
+          if (res.status) player.loadVideoById(musicQueue[current].videoId);
         });
       } else {
         socket.emit("queue-ended");
@@ -112,10 +124,10 @@ if (!user) {
       const str = `
     <div class="queue-list">
     <img
-      src=https://img.youtube.com/vi/${musicQueue[i]}/hqdefault.jpg
+      src=https://img.youtube.com/vi/${musicQueue[i].videoId}/hqdefault.jpg
     />
     <div>
-      <p>Added by as</p> 
+      <p>Added by ${musicQueue[i].username}</p> 
     </div>
   </div>
 `;
@@ -127,19 +139,28 @@ if (!user) {
       if (current === i) {
         newNode.style.backgroundColor = "black";
       }
+      newNode.addEventListener("click", () => {
+        console.log("sdsds", i);
+        socket.emit("list-play", i, (res) => {
+          if (!res.status) {
+            showToast("failed to play", res.status);
+          }
+        });
+      });
       videoContainer.appendChild(newNode);
     }
   }
 
   socket.on("sync-data", (data) => {
-    console.log("syncing", data);
-    const prevVideoId = musicQueue[current];
+    console.log("syncing", data, data.current);
+    const prevVideoId =
+      musicQueue.length != 0 ? musicQueue[current].videoId : "";
     musicQueue = data.musicQueue;
     current = data.current;
     renderQueue();
 
-    if (player && musicQueue[current] !== prevVideoId) {
-      player.loadVideoById(musicQueue[current]);
+    if (player && musicQueue[current].videoId !== prevVideoId) {
+      player.loadVideoById(musicQueue[current].videoId);
     }
   });
 
@@ -191,6 +212,8 @@ if (!user) {
       socket.emit("add-video", ytId, (res) => {
         if (res.status) {
           showToast("Added to Queue", true);
+        } else {
+          showToast(res.msg, res.status);
         }
       });
     }
@@ -200,7 +223,7 @@ if (!user) {
   nextBtn.addEventListener("click", () => {
     if (current < musicQueue.length - 1) {
       socket.emit("next-video", user.userId, (res) => {
-        if (res.status) player.loadVideoById(musicQueue[current]);
+        if (res.status) player.loadVideoById(musicQueue[current].videoId);
       });
     }
   });
@@ -209,7 +232,7 @@ if (!user) {
     if (current > 0) {
       socket.emit("prev-video", user.userId, (res) => {
         if (res.status) {
-          player.loadVideoById(musicQueue[current]);
+          player.loadVideoById(musicQueue[current].videoId);
         }
       });
     }
