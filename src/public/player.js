@@ -70,6 +70,9 @@ if (!user) {
       }
       document.getElementById("pause-icon").style.display = "none";
       document.getElementById("play-icon").style.display = "block";
+    } else if (event.data == YT.PlayerState.PAUSED) {
+      document.getElementById("pause-icon").style.display = "block";
+      document.getElementById("play-icon").style.display = "none";
     } else if (event.data == YT.PlayerState.ENDED) {
       document.getElementById("pause-icon").style.display = "block";
       document.getElementById("play-icon").style.display = "none";
@@ -82,6 +85,20 @@ if (!user) {
       }
     }
   }
+
+  document.getElementById("pause-icon").addEventListener("click", () => {
+    if (player) {
+      player.playVideo();
+    }
+  });
+
+  document.getElementById("play-icon").addEventListener("click", () => {
+    if (player) {
+      player.pauseVideo();
+      document.getElementById("play-icon").style.display = "none";
+      document.getElementById("pause-icon").style.display = "block";
+    }
+  });
 
   socket.on("connect", () => {
     socket.emit(
